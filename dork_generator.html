@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google Dork Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0c10;
+    color: #c9d1d9;
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px;
+    background-image: 
+      radial-gradient(ellipse at 20% 0%, #0d2137 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, #0d1a2e 0%, transparent 50%);
+  }
+
+  h1 {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(18px, 4vw, 26px);
+    color: #58a6ff;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #4a6fa5;
+    letter-spacing: 1px;
+    margin-bottom: 28px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .input-wrapper {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .input-wrapper input {
+    width: 100%;
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    padding: 14px 120px 14px 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    color: #e6edf3;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-wrapper input:focus {
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 3px rgba(88,166,255,0.1);
+  }
+
+  .input-wrapper input::placeholder { color: #484f58; }
+
+  .gen-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1f6feb;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .gen-btn:hover { background: #388bfd; }
+
+  .results-grid { display: grid; gap: 12px; }
+
+  .dork-card {
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s;
+    animation: fadeSlide 0.3s ease both;
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .dork-card:hover { border-color: #30363d; transform: translateY(-1px); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #161b22;
+  }
+
+  .card-icon { font-size: 18px; }
+
+  .card-label {
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .card-desc {
+    font-size: 11px;
+    color: #484f58;
+    margin-left: auto;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .dork-query {
+    padding: 12px 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: #79c0ff;
+    word-break: break-all;
+    line-height: 1.6;
+    background: #0a0e14;
+    border-bottom: 1px solid #161b22;
+  }
+
+  .keyword-highlight { color: #ffa657; }
+  .operator-highlight { color: #ff7b72; }
+  .value-highlight    { color: #a5d6ff; }
+
+  .open-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: #484f58;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    text-decoration: none;
+  }
+
+  .open-btn:hover { background: #161b22; color: #58a6ff; }
+  .open-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: #30363d;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+  }
+
+  .empty-state .big { font-size: 36px; margin-bottom: 12px; }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 14px 12px;
+  }
+
+  .tag {
+    font-size: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    padding: 2px 7px;
+    border-radius: 12px;
+    border: 1px solid;
+    opacity: 0.7;
+  }
+
+  /* Social badges */
+  .social-badges {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    z-index: 999;
+  }
+
+  .social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #484f58;
+    transition: border-color 0.2s, color 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+
+  .social-btn svg { width: 17px; height: 17px; fill: currentColor; }
+
+  .social-btn.ig:hover {
+    color: #e1306c;
+    border-color: #e1306c;
+    box-shadow: 0 0 10px rgba(225,48,108,0.2);
+    transform: translateY(-1px);
+  }
+
+  .social-btn.gh:hover {
+    color: #e6edf3;
+    border-color: #484f58;
+    box-shadow: 0 0 10px rgba(230,237,243,0.1);
+    transform: translateY(-1px);
+  }
+</style>
+</head>
+<body>
+
+<div class="social-badges">
+  <a href="https://instagram.com/0xprajun" target="_blank" rel="noopener" class="social-btn ig" title="@0xprajun">
+    <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+  </a>
+  <a href="https://github.com/cbrnex" target="_blank" rel="noopener" class="social-btn gh" title="cbrnex">
+    <svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+  </a>
+</div>
+
+<h1>// DORK GENERATOR</h1>
+<div class="subtitle">[ GOOGLE DORKING TOOLKIT FOR SECURITY RESEARCHERS ]</div>
+
+<div class="input-wrapper">
+  <input type="text" id="queryInput" placeholder="e.g. real life bug bounty methods and tricks" />
+  <button class="gen-btn" onclick="generate()">GENERATE</button>
+</div>
+
+<!-- Empty on load — cards only appear after Generate is clicked -->
+<div class="results-grid" id="results"></div>
+
+<script>
+  document.getElementById('queryInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') generate();
+  });
+
+  const STOPWORDS = new Set(['and','the','a','an','to','of','in','for','on','with','how','what','why','when','where','is','are','be','been','being','have','has','had','do','does','did','will','would','could','should','may','might','shall','can','need','dare','ought','used','about','above','after','before','between','but','by','from','into','like','more','also','than','that','then','there','these','they','this','those','through','under','up','very','was','were','which','while','who','whom','whose']);
+
+  function getWords(raw) {
+    return raw.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w && !STOPWORDS.has(w));
+  }
+
+  function buildDorks(words) {
+    const phrase    = `"${words.join(' ')}"`;
+    const keyTerms  = words.slice(0, 3).join(' ');
+    const altPhrase = words.length > 2 ? `"${words[0]} ${words[1]}"` : phrase;
+
+    return [
+      {
+        icon: '🎬', label: 'Videos', color: '#ff4545', tags: ['YouTube', 'Vimeo', 'Tutorial'], desc: 'Video Platforms',
+        query: `site:youtube.com OR site:vimeo.com intitle:${phrase} ${keyTerms}`,
+        display: [
+          { text: 'site:', cls: 'operator-highlight' }, { text: 'youtube.com', cls: 'value-highlight' },
+          { text: ' OR ', cls: '' },
+          { text: 'site:', cls: 'operator-highlight' }, { text: 'vimeo.com', cls: 'value-highlight' },
+          { text: ' intitle:', cls: 'operator-highlight' }, { text: phrase, cls: 'keyword-highlight' },
+          { text: ` ${keyTerms}`, cls: '' },
+        ]
+      },
+      {
+        icon: '📄', label: 'PDFs / Whitepapers', color: '#f0883e', tags: ['Filetype', 'Reports', 'Research'], desc: 'Documents',
+        query: `filetype:pdf ${phrase} ${keyTerms}`,
+        display: [
+          { text: 'filetype:', cls: 'operator-highlight' }, { text: 'pdf', cls: 'value-highlight' },
+          { text: ' ', cls: '' }, { text: phrase, cls: 'keyword-highlight' },
+          { text: ` ${keyTerms}`, cls: '' },
+        ]
+      },
+      {
+        icon: '📝', label: 'Blogs & Articles', color: '#3fb950', tags: ['Medium', 'Dev.to', 'HackerNoon'], desc: 'Blog Platforms',
+        query: `site:medium.com OR site:dev.to OR site:hackernoon.com intitle:${altPhrase} ${keyTerms}`,
+        display: [
+          { text: 'site:', cls: 'operator-highlight' }, { text: 'medium.com', cls: 'value-highlight' },
+          { text: ' OR ', cls: '' },
+          { text: 'site:', cls: 'operator-highlight' }, { text: 'dev.to', cls: 'value-highlight' },
+          { text: ' OR ', cls: '' },
+          { text: 'site:', cls: 'operator-highlight' }, { text: 'hackernoon.com', cls: 'value-highlight' },
+          { text: ' intitle:', cls: 'operator-highlight' }, { text: altPhrase, cls: 'keyword-highlight' },
+          { text: ` ${keyTerms}`, cls: '' },
+        ]
+      },
+      {
+        icon: '🐙', label: 'GitHub Repos', color: '#58a6ff', tags: ['Code', 'Tools', 'Repos'], desc: 'Open Source',
+        query: `site:github.com ${keyTerms} readme`,
+        display: [
+          { text: 'site:', cls: 'operator-highlight' }, { text: 'github.com', cls: 'value-highlight' },
+          { text: ' ', cls: '' }, { text: keyTerms, cls: 'keyword-highlight' },
+          { text: ' readme', cls: '' },
+        ]
+      },
+      {
+        icon: '📊', label: 'Slides & Presentations', color: '#bc8cff', tags: ['PPT', 'SlideShare', 'Talks'], desc: 'Presentations',
+        query: `site:slideshare.net OR filetype:ppt OR filetype:pptx ${phrase}`,
+        display: [
+          { text: 'site:', cls: 'operator-highlight' }, { text: 'slideshare.net', cls: 'value-highlight' },
+          { text: ' OR ', cls: '' },
+          { text: 'filetype:', cls: 'operator-highlight' }, { text: 'ppt', cls: 'value-highlight' },
+          { text: ' OR ', cls: '' },
+          { text: 'filetype:', cls: 'operator-highlight' }, { text: 'pptx', cls: 'value-highlight' },
+          { text: ' ', cls: '' }, { text: phrase, cls: 'keyword-highlight' },
+        ]
+      },
+      {
+        icon: '💬', label: 'Forums & Communities', color: '#ff7b72', tags: ['Reddit', 'HackerNews', 'Discussions'], desc: 'Communities',
+        query: `site:reddit.com OR site:news.ycombinator.com ${phrase}`,
+        display: [
+          { text: 'site:', cls: 'operator-highlight' }, { text: 'reddit.com', cls: 'value-highlight' },
+          { text: ' OR ', cls: '' },
+          { text: 'site:', cls: 'operator-highlight' }, { text: 'news.ycombinator.com', cls: 'value-highlight' },
+          { text: ' ', cls: '' }, { text: phrase, cls: 'keyword-highlight' },
+        ]
+      },
+      {
+        icon: '🏴', label: 'CTF & Writeups', color: '#ffa657', tags: ['CTFtime', 'Writeups', 'Security'], desc: 'Hacking Practice',
+        query: `site:ctftime.org OR inurl:writeup ${keyTerms}`,
+        display: [
+          { text: 'site:', cls: 'operator-highlight' }, { text: 'ctftime.org', cls: 'value-highlight' },
+          { text: ' OR ', cls: '' },
+          { text: 'inurl:', cls: 'operator-highlight' }, { text: 'writeup', cls: 'value-highlight' },
+          { text: ` ${keyTerms}`, cls: '' },
+        ]
+      },
+    ];
+  }
+
+  function renderHighlighted(parts) {
+    return parts.map(p => `<span class="${p.cls}">${escHtml(p.text)}</span>`).join('');
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function generate() {
+    const raw = document.getElementById('queryInput').value.trim();
+    const container = document.getElementById('results');
+
+    if (!raw) {
+      container.innerHTML = '<div class="empty-state"><div class="big">⌨️</div>Enter a topic above to generate dorks</div>';
+      return;
+    }
+
+    const words = getWords(raw);
+
+    if (words.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="big">🤔</div>No meaningful keywords found — try a more specific topic</div>';
+      return;
+    }
+
+    const dorks = buildDorks(words);
+    container.innerHTML = '';
+
+    dorks.forEach((d, i) => {
+      const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(d.query)}`;
+      const card = document.createElement('div');
+      card.className = 'dork-card';
+      card.style.animationDelay = `${i * 50}ms`;
+
+      const tagsHtml = d.tags.map(t =>
+        `<span class="tag" style="color:${d.color};border-color:${d.color}">${t}</span>`
+      ).join('');
+
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="card-icon">${d.icon}</span>
+          <span class="card-label" style="color:${d.color}">${d.label}</span>
+          <span class="card-desc">${d.desc}</span>
+        </div>
+        <div class="dork-query">${renderHighlighted(d.display)}</div>
+        <div class="tag-row">${tagsHtml}</div>
+        <a href="${googleUrl}" target="_blank" rel="noopener" class="open-btn">
+          <svg viewBox="0 0 16 16"><path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z"/></svg>
+          OPEN IN GOOGLE
+        </a>
+      `;
+      container.appendChild(card);
+    });
+  }
+</script>
+
+</body>
+</html>
