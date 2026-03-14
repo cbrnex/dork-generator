@@ -309,18 +309,6 @@
         ]
       },
       {
-        icon: '📊', label: 'Slides & Presentations', color: '#bc8cff', tags: ['PPT', 'SlideShare', 'Talks'], desc: 'Presentations',
-        query: `site:slideshare.net OR filetype:ppt OR filetype:pptx ${phrase}`,
-        display: [
-          { text: 'site:', cls: 'operator-highlight' }, { text: 'slideshare.net', cls: 'value-highlight' },
-          { text: ' OR ', cls: '' },
-          { text: 'filetype:', cls: 'operator-highlight' }, { text: 'ppt', cls: 'value-highlight' },
-          { text: ' OR ', cls: '' },
-          { text: 'filetype:', cls: 'operator-highlight' }, { text: 'pptx', cls: 'value-highlight' },
-          { text: ' ', cls: '' }, { text: phrase, cls: 'keyword-highlight' },
-        ]
-      },
-      {
         icon: '💬', label: 'Forums & Communities', color: '#ff7b72', tags: ['Reddit', 'HackerNews', 'Discussions'], desc: 'Communities',
         query: `site:reddit.com OR site:news.ycombinator.com ${phrase}`,
         display: [
